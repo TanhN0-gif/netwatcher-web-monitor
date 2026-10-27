@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetWatcher Web - Trình theo dõi mạng Wi-Fi & LAN</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">NetWatcher Web</h1>
+          <p class="brand-subtitle">Trình theo dõi thiết bị & thông số mạng Wi-Fi / LAN (Tương đương Wireless Network Watcher)</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Sound Alert Toggle -->
+        <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; color:var(--text-muted); cursor:pointer; user-select:none; background:var(--bg-card); padding:0.5rem 0.85rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+          <input type="checkbox" id="soundToggle" checked style="accent-color:var(--accent-blue);">
+          <span>🔔 Chuông báo</span>
+        </label>
+
+        <!-- Auto-Scan Interval -->
+        <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; color:var(--text-muted); background:var(--bg-card); padding:0.45rem 0.85rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+          <span>🔄 Tự quét:</span>
+          <select id="autoScanSelect" style="background:transparent; border:none; color:#fff; font-size:0.82rem; outline:none; cursor:pointer;">
+            <option value="10" style="background:#1f2937;">10 giây</option>
+            <option value="30" selected style="background:#1f2937;">30 giây</option>
+            <option value="60" style="background:#1f2937;">60 giây</option>
+            <option value="0" style="background:#1f2937;">Tắt</option>
+          </select>
+        </div>
+
+        <!-- Scan Now Button -->
+        <button id="btnScanNow" class="btn btn-primary">
+          <span>⚡</span> Quét mạng ngay
+        </button>
+      </div>
+    </header>
+
+    <!-- Stat Cards Grid -->
+    <section class="stats-grid">
+      <!-- Card 1: Online Devices -->
+      <div class="stat-card">
+        <div class="stat-icon-wrapper green">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Thiết bị trực tuyến</div>
+          <div class="stat-value" id="statOnlineCount">--</div>
+          <div class="stat-meta" id="statTotalCount">Đang tải...</div>
+        </div>
+      </div>
+
+      <!-- Card 2: Download Speed -->
+      <div class="stat-card">
+        <div class="stat-icon-wrapper cyan">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Tốc độ Tải xuống (Down)</div>
+          <div class="stat-value" id="statDownSpeed">0 B/s</div>
+          <div class="stat-meta" id="statDownTotal">Tổng nhận: --</div>
+        </div>
+      </div>
+
+      <!-- Card 3: Upload Speed -->
+      <div class="stat-card">
+        <div class="stat-icon-wrapper blue">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Tốc độ Tải lên (Up)</div>
+          <div class="stat-value" id="statUpSpeed">0 B/s</div>
+          <div class="stat-meta" id="statUpTotal">Tổng gửi: --</div>
+        </div>
+      </div>
+
+      <!-- Card 4: Wi-Fi Signal / Connection -->
+      <div class="stat-card">
+        <div class="stat-icon-wrapper amber">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Sóng Wi-Fi & Trạng thái</div>
+          <div class="stat-value" id="statWifiSignal">--</div>
+          <div class="stat-meta" id="statWifiMeta">Đang kiểm tra...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scan Progress Bar (Animated) -->
+    <div id="scanProgressWrapper" class="scan-progress-wrapper">
+      <div class="progress-header">
+        <span id="scanStatusText">Đang quét các thiết bị trong mạng...</span>
+        <span id="scanPercentText" style="font-family:var(--font-mono); font-weight:600;">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="scanProgressBar" class="progress-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+      <button class="tab-btn active" data-tab="devices">
+        <span>📡</span> Danh sách thiết bị (Devices List)
+      </button>
+      <button class="tab-btn" data-tab="wifi-aps">
+        <span>📶</span> Quét sóng Wi-Fi & Cường độ (dBm)
+      </button>
+      <button class="tab-btn" data-tab="parameters">
+        <span>📊</span> Thông số mạng & Biểu đồ băng thông
+      </button>
+      <button class="tab-btn" data-tab="tools">
+        <span>🛠️</span> Công cụ mạng & Quét Database
+      </button>
+    </nav>
+
+    <!-- ==========================================
+         TAB 1: DEVICES LIST (Wireless Network Watcher)
+         ========================================== -->
+    <main id="tab-devices" class="tab-pane active">
+      <!-- Toolbar & Filters -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <!-- Search Box -->
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Tìm theo IP, MAC, Tên, Hãng...">
+          </div>
+
+          <!-- Filter Pills -->
+          <button class="filter-pill active" data-filter="all">Tất cả</button>
+          <button class="filter-pill" data-filter="online">🟢 Đang Online</button>
+          <button class="filter-pill" data-filter="new">🆕 Mới vào</button>
+          <button class="filter-pill" data-filter="router">🌐 Router</button>
+          <button class="filter-pill" data-filter="mobile">📱 Điện thoại</button>
+          <button class="filter-pill" data-filter="pc">💻 Máy tính</button>
+        </div>
+
+        <div class="toolbar-right">
+          <!-- Custom Range Input -->
+          <input type="text" id="scanRangeInput" placeholder="Dải IP (vd: 10.12.8.1-10.12.8.254)" 
+                 style="background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.4rem 0.65rem; color:#fff; font-size:0.78rem; width:200px; font-family:var(--font-mono);" 
+                 title="Để trống sẽ tự động quét dải /24 của mạng hiện tại">
+
+          <!-- Export Buttons -->
+          <a href="/api/export/csv" class="btn btn-secondary btn-sm" title="Xuất file CSV giống NirSoft">
+            <span>📥</span> CSV
+          </a>
+          <a href="/api/export/json" class="btn btn-secondary btn-sm" title="Xuất file JSON">
+            <span>📥</span> JSON
+          </a>
+          <button id="btnClearHistory" class="btn btn-secondary btn-sm" title="Xóa lịch sử và quét lại">
+            <span>🗑️</span> Làm mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Devices Table -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="devices-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Trạng thái</th>
+                <th style="width: 180px;">Địa chỉ IP</th>
+                <th>Tên thiết bị (Device Name)</th>
+                <th style="width: 180px;">Địa chỉ MAC</th>
+                <th>Nhà sản xuất (Vendor)</th>
+                <th style="width: 140px;">Loại</th>
+                <th style="width: 90px;">Độ trễ</th>
+                <th style="width: 160px;">Thời gian thấy</th>
+                <th style="width: 130px;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="devicesTableBody">
+              <tr>
+                <td colspan="9" style="text-align:center; padding: 2.5rem; color: var(--text-dim);">
+                  Đang khởi động trình quét mạng...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- ==========================================
+         TAB: SURROUNDING WI-FI NETWORKS & DBM (Wi-Fi Analyzer)
+         ========================================== -->
+    <section id="tab-wifi-aps" class="tab-pane">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div style="font-weight:700; font-size:1.05rem; color:#fff; display:flex; align-items:center; gap:0.5rem;">
+            <span>📶</span> Quét trạm phát Wi-Fi lân cận & Cường độ sóng (dBm)
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <button id="btnScanWifiAps" class="btn btn-primary btn-sm">
+            <span>🔄</span> Quét lại sóng Wi-Fi (dBm)
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="devices-table">
+            <thead>
+              <tr>
+                <th>Tên mạng (SSID)</th>
+                <th style="width: 140px;">Cường độ (dBm)</th>
+                <th style="width: 130px;">Tín hiệu (%)</th>
+                <th style="width: 170px;">BSSID (AP MAC)</th>
+                <th style="width: 90px;">Kênh (Ch)</th>
+                <th style="width: 100px;">Băng tần</th>
+                <th style="width: 130px;">Chuẩn Wi-Fi</th>
+                <th>Bảo mật</th>
+                <th style="width: 110px;">Máy kết nối</th>
+              </tr>
+            </thead>
+            <tbody id="wifiApsTableBody">
+              <tr>
+                <td colspan="9" style="text-align:center; padding: 2.5rem; color: var(--text-dim);">
+                  Nhấn "Quét lại sóng Wi-Fi (dBm)" hoặc chuyển tab để tải danh sách trạm phát sóng...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TAB 3: NETWORK PARAMETERS & BANDWIDTH CHART
+         ========================================== -->
+    <section id="tab-parameters" class="tab-pane">
+      
+      <!-- Live Bandwidth Chart Card -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <div>
+            <h3 style="font-size:1.05rem; font-weight:700; color:#fff;">Biểu đồ băng thông mạng thời gian thực</h3>
+            <p style="font-size:0.78rem; color:var(--text-muted);">Cập nhật tốc độ Tải xuống (Download) và Tải lên (Upload) mỗi giây</p>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background:#06b6d4;"></span>
+              <span style="color:#e5e7eb;">Download: <strong id="chartLiveDown" style="color:#06b6d4; font-family:var(--font-mono); margin-left:2px;">0 B/s</strong></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background:#a855f7;"></span>
+              <span style="color:#e5e7eb;">Upload: <strong id="chartLiveUp" style="color:#a855f7; font-family:var(--font-mono); margin-left:2px;">0 B/s</strong></span>
+            </div>
+          </div>
+        </div>
+        <canvas id="bandwidthChart"></canvas>
+      </div>
+
+      <!-- Network Details Grid -->
+      <div class="network-details-grid">
+        <!-- Wi-Fi Parameters Card -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span style="color:var(--accent-blue);">📶</span> Thông số Wi-Fi chi tiết
+          </div>
+          <div class="param-list">
+            <div class="param-item">
+              <span class="param-key">Tên mạng (SSID):</span>
+              <span class="param-value" id="paramSsid">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Chuẩn Wi-Fi (Radio Type):</span>
+              <span class="param-value" id="paramRadioType">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Băng tần & Kênh:</span>
+              <span class="param-value" id="paramBandChannel">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Tốc độ liên kết (Link Speed):</span>
+              <span class="param-value" id="paramLinkSpeed">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Địa chỉ BSSID (AP MAC):</span>
+              <span class="param-value" id="paramBssid">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- IP & Routing Parameters Card -->
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <span style="color:var(--accent-cyan);">🌐</span> Cấu hình IP & Định tuyến
+          </div>
+          <div class="param-list">
+            <div class="param-item">
+              <span class="param-key">Địa chỉ IPv4 cục bộ:</span>
+              <span class="param-value" id="paramLocalIp">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Card mạng chính:</span>
+              <span class="param-value" id="paramActiveIface">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Subnet Mask:</span>
+              <span class="param-value" id="paramSubnet">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Cổng mặc định (Gateway):</span>
+              <span class="param-value" id="paramGateway">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Máy chủ DNS:</span>
+              <span class="param-value" id="paramDns">--</span>
+            </div>
+            <div class="param-item">
+              <span class="param-key">Địa chỉ MAC Card mạng:</span>
+              <span class="param-value" id="paramMac">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Adapters List Card -->
+      <div class="detail-card" style="margin-top:1.25rem;">
+        <div class="detail-card-title">
+          <span style="color:var(--accent-purple);">🔌</span> Danh sách tất cả Card mạng trên hệ thống
+        </div>
+        <div id="adaptersList">
+          <div style="color:var(--text-dim); font-size:0.85rem;">Đang tải danh sách card mạng...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TAB 3: TOOLS (PING & PORT SCANNER)
+         ========================================== -->
+    <section id="tab-tools" class="tab-pane">
+      <div class="tools-grid">
+        <!-- Tool 1: Interactive Ping -->
+        <div class="tool-card">
+          <h3 style="font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>⚡</span> Kiểm tra kết nối (Ping Tool)
+          </h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+            Gửi gói tin ICMP Ping đến thiết bị hoặc tên miền để đo độ trễ và tỷ lệ mất gói.
+          </p>
+          <div class="tool-input-group">
+            <input type="text" id="pingInput" placeholder="vd: 10.12.0.1 hoặc 8.8.8.8" value="10.12.0.1">
+            <button id="btnRunPing" class="btn btn-primary">Ping</button>
+          </div>
+          <div class="console-output" id="pingOutput">Sẵn sàng để gửi Ping...</div>
+        </div>
+
+        <!-- Tool 2: Port Scanner -->
+        <div class="tool-card">
+          <h3 style="font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🔍</span> Quét cổng dịch vụ (Quick Port Scanner)
+          </h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+            Kiểm tra các cổng phổ biến đang mở (Web 80/443, SSH 22, SMB 445, RDP 3389...) trên thiết bị.
+          </p>
+          <div class="tool-input-group">
+            <input type="text" id="portScanInput" placeholder="vd: 10.12.0.1" value="10.12.0.1">
+            <button id="btnRunPortScan" class="btn btn-primary">Quét cổng</button>
+          </div>
+          <div class="console-output" id="portScanOutput">Sẵn sàng để quét cổng dịch vụ...</div>
+        </div>
+
+        <!-- Tool 3: Database Scanner -->
+        <div class="tool-card" style="grid-column: 1 / -1;">
+          <h3 style="font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>🗄️</span> Quét máy chủ Database trong mạng (Database Server Discovery)
+          </h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+            Dò tìm các máy chủ Cơ sở dữ liệu đang mở trên mạng: <strong>MySQL/MariaDB (3306)</strong>, <strong>PostgreSQL (5432)</strong>, <strong>MSSQL (1433)</strong>, <strong>MongoDB (27017)</strong>, <strong>Redis (6379)</strong>, <strong>Oracle (1521)</strong>, <strong>Elasticsearch (9200)</strong>. Để trống ô IP để tự động quét toàn bộ thiết bị đang online.
+          </p>
+          <div class="tool-input-group">
+            <input type="text" id="dbScanInput" placeholder="Để trống để quét tất cả thiết bị online trong mạng (hoặc nhập IP cụ thể, vd: 10.12.8.83)">
+            <button id="btnRunDbScan" class="btn btn-primary">
+              <span>🚀</span> Quét Database (DB)
+            </button>
+          </div>
+          <div class="console-output" id="dbScanOutput">Sẵn sàng để dò tìm máy chủ Database...</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Custom Name / Alias Modal -->
+  <div id="aliasModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Đặt tên tùy biến cho thiết bị</h3>
+        <button id="modalCloseBtn" class="modal-close">✕</button>
+      </div>
+      <div style="font-size:0.84rem; color:var(--text-muted); margin-bottom:1rem;" id="aliasTargetDesc">
+        --
+      </div>
+      <input type="hidden" id="aliasMacInput">
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block; font-size:0.82rem; color:var(--text-muted); margin-bottom:0.4rem;">
+          Tên nhận diện (vd: iPhone của Nam, Smart TV Phòng Khách):
+        </label>
+        <input type="text" id="aliasNameInput" style="width:100%; padding:0.65rem 0.85rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.9rem; outline:none;" placeholder="Nhập tên dễ nhớ...">
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelAlias" class="btn btn-secondary">Hủy</button>
+        <button id="btnSaveAlias" class="btn btn-primary">Lưu tên</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
